@@ -1,31 +1,44 @@
-﻿using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Psyker.WebUI.Models;
+﻿namespace Psyker.WebUI.Controllers;
 
-namespace Psyker.WebUI.Controllers;
+using System.Diagnostics;
+using Hangfire;
+using Microsoft.AspNetCore.Mvc;
+using Psyker.Shared;
+using Psyker.Shared.Commands;
+using Psyker.WebUI.Models;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly IBackgroundJobClient backgroundJobClient;
+    private readonly ILogger<HomeController> logger;
 
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
+    public HomeController(IBackgroundJobClient backgroundJobClient, ILogger<HomeController> logger)
+        => (this.backgroundJobClient, this.logger) = (backgroundJobClient, logger);
 
     public IActionResult Index()
     {
-        return View();
+        var command = new SendMessage
+        {
+            Id = Guid.NewGuid(),
+            Payload = "Hello World!!!",
+        };
+
+        this.backgroundJobClient.Enqueue<MediatorHangfireBridge>(bridge => bridge.Send("send-message", command));
+        return base.View();
     }
 
     public IActionResult Privacy()
     {
-        return View();
+        return base.View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var viewModel = new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+        };
+        return base.View(viewModel);
     }
 }
