@@ -3,27 +3,33 @@
 using System.Diagnostics;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Psyker.Shared;
 using Psyker.Shared.Commands;
 using Psyker.WebUI.Models;
 
-public class HomeController : Controller
+public sealed class HomeController : Controller
 {
     private readonly IBackgroundJobClient backgroundJobClient;
+    private readonly IStringLocalizer<HomeController> localizer;
     private readonly ILogger<HomeController> logger;
 
-    public HomeController(IBackgroundJobClient backgroundJobClient, ILogger<HomeController> logger)
-        => (this.backgroundJobClient, this.logger) = (backgroundJobClient, logger);
+    public HomeController(IBackgroundJobClient backgroundJobClient, IStringLocalizer<HomeController> localizer, ILogger<HomeController> logger)
+        => (this.backgroundJobClient, this.localizer, this.logger) = (backgroundJobClient, localizer, logger);
 
     public IActionResult Index()
     {
+        var title = localizer["Title"];
+
         var command = new SendMessage
         {
             Id = Guid.NewGuid(),
             Payload = "Hello World!!!",
         };
 
-        this.backgroundJobClient.Enqueue<MediatorHangfireBridge>(bridge => bridge.Send("send-message", command));
+        this.logger.LogInformation($"Processing '{nameof(Index)}' request");
+        this.backgroundJobClient.Enqueue<MediatRHangfireBridge>(bridge => bridge.Send("send-message", command));
+
         return base.View();
     }
 
@@ -39,6 +45,7 @@ public class HomeController : Controller
         {
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
         };
+
         return base.View(viewModel);
     }
 }

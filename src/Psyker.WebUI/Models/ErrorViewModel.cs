@@ -1,8 +1,8 @@
 namespace Psyker.WebUI.Models;
 
-public class ErrorViewModel
+public sealed class ErrorViewModel
 {
-    public string? RequestId { get; set; }
+    public string? RequestId { get; init; } = default;
 
     public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 }

@@ -11,11 +11,13 @@ internal static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
+        // ReSharper disable once InvokeAsExtensionMethod
         HangfireServiceCollectionExtensions.AddHangfire(services, cfg =>
         {
             cfg.UseSqlServerStorage(connectionString);
             cfg.UseMediatR();
         });
+
         services.AddHangfireServer();
 
         return services;
